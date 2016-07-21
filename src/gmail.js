@@ -1249,6 +1249,7 @@ var Gmail = function(localJQuery) {
         class: 'An', // M9 would be better but this isn't set at the point of insertion
         handler: function(match, callback) {
           // console.log('reply_forward handler called', match, callback);
+          var originalMatch = match;
 
           // look back up the DOM tree for M9 (the main reply/forward node)
           match = match.closest('div.M9');
@@ -1259,6 +1260,17 @@ var Gmail = function(localJQuery) {
             type = match.find('input[name=subject]').val().indexOf('Fw') == 0 ? 'forward' : 'reply';
           } else {
             type = 'compose';
+
+            //Find the close button and set an event listener so we can forward the compose_cancelled event.
+            var composeWindow = originalMatch.closest('div.AD');
+
+            composeWindow.find('.Ha').mouseup(function() {
+              if(api.tracker.composeCancelledCallback) {
+                api.tracker.composeCancelledCallback(match);
+              }
+
+              return true;
+            });
           }
           callback(match,type);
         }
@@ -1378,6 +1390,9 @@ var Gmail = function(localJQuery) {
       // console.log(api.tracker.observing_dom,'dom_watchdog is now:',api.tracker.dom_watchdog);
       return true;
 
+    // support for close event
+    } else if(action == 'compose_cancelled') {
+      api.tracker.composeCancelledCallback = callback;
     // support for gmail interface load event
     } else if(action == 'load') {
 
